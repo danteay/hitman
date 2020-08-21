@@ -1,0 +1,10 @@
+app_name: "hitmans"
+
+database: "mongodb+srv://hitman:swfpxMoz2qUD3FTA@hitmans.xyb5a.mongodb.net/hitmans?retryWrites=true&w=majority"
+
+salt: "$2b$12$xWiFaDEF4pWddBgPRr.hFu"
+
+jwt:
+  secret: "jkbr72bndf81n"
+  algorithm: "HS256"
+

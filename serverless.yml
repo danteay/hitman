@@ -1,0 +1,61 @@
+service: hitmans
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.8
+  stage: ${opt:stage, 'dev'}
+
+layers:
+  hitmansReqs:
+    path: layers/reqs
+    description: "Dependencies for projectName"
+    compatibleRuntime:
+      - python3.8
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+
+functions:
+
+  login:
+    handler: src/handlers/users.login
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: post
+          path: users/login
+
+  logout:
+    handler: src/handlers/users.logout
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: post
+          path: users/logout
+
+  register:
+    handler: src/handlers/users.register
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: post
+          path: users
+
+  list_users:
+    handler: src/handlers/users.list_users
+    layers:
+        - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: get
+          path: users
+
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
