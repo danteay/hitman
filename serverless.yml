@@ -73,6 +73,15 @@ functions:
           method: put
           path: users/{user_id}/manager
 
+  list_hits:
+    handler: src/handlers/hits.list
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: get
+          path: hits
+
   create_hit:
     handler: src/handlers/hits.create
     layers:

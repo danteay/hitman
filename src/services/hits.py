@@ -5,37 +5,74 @@ Hit service actions
 from bson.objectid import ObjectId
 
 from src.commons.mongo import get_connection
-from src.commons.errors import InvalidHit, InactiveUser, UnauthorizedUser
-from src.helpers.users import is_active, ensure_manager, only_managers_and_master
+from src.commons.logger import LOGGER as logger
+from src.commons.errors import InvalidHit, InactiveUser, UnauthorizedUser, InvalidUser
+from src.helpers.users import is_active, ensure_manager, get_user, is_master
 
 
-class Hits:
+class HitsService:
+
     @staticmethod
-    def create(session, target, hitman_id):
+    def list(session):
         """
-        Register new hit target
-        :param session: Current user session object
-        :param target: Target name
-        :param hitman_id: User id of the assigned hitman
+        Return all available hits according the user
+        :param session: Current user session
+        :return: list of hits
         """
 
-        only_managers_and_master(session)
+        filters = {}
 
-        if session["user_type"] == "manager" and not ensure_manager(
-            hitman_id, session["id"]
-        ):
-            raise UnauthorizedUser("resource is not able for this user")
+        if not is_master(session["id"]):
+            user = get_user(session["id"])
+            user_list = [user["_id"]]
 
-        if session["id"] == hitman_id:
-            raise InvalidHit("self assigned hit")
+            if "subordinates" in user:
+                user_list = user_list + user["subordinates"]
+                user_list.append(None)
 
-        if not is_active(hitman_id):
-            raise InactiveUser("hitman is inactive")
+            filters = {"user_id": {"$in": user_list}}
 
-        data_hit = {"target": target, "user_id": ObjectId(hitman_id)}
+        logger.fields({"filters": filters}).debug("filtering hits")
 
         db_client = get_connection()
+        all_hits = db_client.hits.find(filters)
 
-        hit = db_client.users.insert_one(data_hit)
+        return list(all_hits)
 
-        return {"id": str(hit.inserted_id)}
+    @staticmethod
+    def create(manager_id, target, description, user_id=None):
+        """
+        Register new hit target
+        :param manager_id: Current manager that is creating the hit
+        :param target: Target name
+        :param description: Brief description of the hit
+        :param user_id: User id of the assigned hitman
+        """
+
+        manager = get_user(manager_id)
+
+        if not manager:
+            raise InvalidUser("invalid manager id")
+
+        if user_id is not None:
+            if manager_id == user_id:
+                raise InvalidHit("self assigned hit")
+
+            if not is_master(manager_id) and not ensure_manager(user_id, manager_id):
+                raise UnauthorizedUser("manager can't assign hits to this user")
+
+            if not is_active(user_id):
+                raise InactiveUser("hitman is inactive")
+
+        data_hit = {
+            "target": target,
+            "description": description,
+            "user_id": ObjectId(user_id) if user_id is not None else None,
+            "status:": "assigned" if user_id is not None else "created",
+            "creator_id": ObjectId(manager_id)
+        }
+
+        db_client = get_connection()
+        hit = db_client.hits.insert_one(data_hit)
+
+        return {"id": hit.inserted_id}
