@@ -32,7 +32,7 @@ def response(code, body=None, error=None):
     else:
         logger.info("handled request")
 
-    return {"statusCode": code, "body": json.dumps(body)}
+    return {"statusCode": code, "body": json.dumps(body, default=str)}
 
 
 def get_error_from_code(code):

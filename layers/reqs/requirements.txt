@@ -5,3 +5,4 @@ bcrypt~=3.2.0
 pyjwt~=1.7.1
 bson~=0.5.10
 dnspython~=2.0.0
+py3-validate-email~=0.2.9

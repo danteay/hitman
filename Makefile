@@ -1,4 +1,6 @@
+# Analyze the given Python modules and compute Cyclomatic Complexity
 cc_json = "$(shell radon cc --min C src --json)"
+# Analyze the given Python modules and compute the Maintainability Index
 mi_json = "$(shell radon mi --min B src --json)"
 
 lint:

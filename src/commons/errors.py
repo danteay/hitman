@@ -25,6 +25,16 @@ class HandlerError(Exception):
         return self.code
 
 
+class InvalidSessionToken(HandlerError):
+    """
+    Custom error for an invalid session token validation
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(403, "invalid-session", errors)
+
+
 class UserConflict(HandlerError):
     """
     Custom error for user registration conflict
@@ -43,3 +53,43 @@ class UnauthorizedUser(HandlerError):
 
     def __init__(self, errors=None):
         super().__init__(401, "unauthorized", errors)
+
+
+class InactiveUser(HandlerError):
+    """
+    Custom error for Inactive users
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(402, "inactive-user", errors)
+
+
+class InvalidUser(HandlerError):
+    """
+    Custom error for not found users
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(422, "invalid-user", errors)
+
+
+class InvalidUserInfo(HandlerError):
+    """
+    Custom error for not found users
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(422, "invalid-user-info", errors)
+
+
+class InvalidHit(HandlerError):
+    """
+    custom error for invalid hit data
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(422, "invalid-hit", errors)

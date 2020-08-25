@@ -49,11 +49,38 @@ functions:
   list_users:
     handler: src/handlers/users.list_users
     layers:
-        - {Ref: HitmansReqsLambdaLayer}
+      - {Ref: HitmansReqsLambdaLayer}
     events:
       - http:
           method: get
           path: users
+
+  fetch_user:
+    handler: src/handlers/users.fetch_user
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: get
+          path: users/{user_id}
+
+  assign_hitman_manager:
+    handler: src/handlers/users.assign_manager
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: put
+          path: users/{user_id}/manager
+
+  create_hit:
+    handler: src/handlers/hits.create
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: post
+          path: hits
 
 
 plugins:
