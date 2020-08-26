@@ -18,7 +18,7 @@ from src.commons.errors import (
     InvalidUserInfo,
 )
 from src.commons.jwt import sign, decode
-from src.helpers.users import is_active, is_master, get_user
+from src.helpers.users import is_active, is_master, get_user, get_all_users
 from src.config import CONFIG
 
 
@@ -26,6 +26,8 @@ class UsersService:
     """
     User service actions
     """
+
+    DB = get_connection()
 
     @staticmethod
     def list(session):
@@ -37,8 +39,8 @@ class UsersService:
 
         filters = {}
 
-        if not is_master(session["id"]):
-            user = get_user(session["id"])
+        if not is_master(UsersService.DB, session["id"]):
+            user = get_user(UsersService.DB, {"_id": ObjectId(session["id"])})
             user_list = [user["_id"]]
 
             if "subordinates" in user:
@@ -46,8 +48,9 @@ class UsersService:
 
             filters = {"_id": {"$in": user_list}}
 
-        db_client = get_connection()
-        all_users = db_client.users.find(filters, {"password": 0})
+        all_users = get_all_users(
+            UsersService.DB, filters, {"password": 0, "session": 0}
+        )
 
         return list(all_users)
 
@@ -60,8 +63,8 @@ class UsersService:
         :return: User info
         """
 
-        if not is_master(session["id"]):
-            user = get_user(session["id"])
+        if not is_master(UsersService.DB, session["id"]):
+            user = get_user(UsersService.DB, {"_id": ObjectId(session["id"])})
 
             if "subordinates" not in user:
                 raise UnauthorizedUser()
@@ -69,8 +72,9 @@ class UsersService:
             if ObjectId(user_id) not in user["subordinates"]:
                 raise UnauthorizedUser()
 
-        db_client = get_connection()
-        user = db_client.users.find_one({"_id": ObjectId(user_id)}, {"password": 0})
+        user = get_user(
+            UsersService.DB, {"_id": ObjectId(user_id)}, {"password": 0, "session": 0}
+        )
 
         if not user:
             raise InvalidUser()
@@ -88,10 +92,10 @@ class UsersService:
         :return: New inserted user id
         """
 
-        if not validate_email(email):
+        if not validate_email(
+            email_address=email, check_regex=True, check_mx=False, debug=False
+        ):
             raise InvalidUserInfo()
-
-        db_client = get_connection()
 
         hash_pass = bcrypt.hashpw(
             password.encode("utf-8"), CONFIG["salt"].encode("utf-8")
@@ -108,9 +112,9 @@ class UsersService:
         logger.field("user", user).debug("new user")
 
         try:
-            user = db_client.users.insert_one(user)
+            user = UsersService.DB.users.insert_one(user)
 
-            return {"id": str(user.inserted_id)}
+            return {"_id": user.inserted_id}
         except Exception as error:
             logger.error("user registration error", error)
             raise UserConflict(error)
@@ -123,9 +127,9 @@ class UsersService:
         :param password: Password
         """
 
-        db_client = get_connection()
+        user = get_user(UsersService.DB, {"email": email})
 
-        user = db_client.users.find_one({"email": email})
+        logger.fields({"user": user}).debug("current user")
 
         if not user or not user["active"]:
             raise UnauthorizedUser()
@@ -146,7 +150,7 @@ class UsersService:
 
         token = sign(jwt_data).decode("utf-8")
 
-        db_client.users.update(
+        UsersService.DB.users.update(
             {"_id": ObjectId(user["_id"])}, {"$set": {"session": token}}
         )
 
@@ -159,11 +163,9 @@ class UsersService:
         :param token: session token
         """
 
-        db_client = get_connection()
-
         user_id = decode(token)["id"]
 
-        user = db_client.users.find_one({"_id": ObjectId(user_id)})
+        user = get_user(UsersService.DB, {"_id": ObjectId(user_id)})
 
         if not user:
             raise InvalidUser("not found user")
@@ -171,7 +173,9 @@ class UsersService:
         if user["session"] != token:
             raise InvalidSessionToken()
 
-        db_client.users.update({"_id": ObjectId(user_id)}, {"$set": {"session": None}})
+        UsersService.DB.users.update(
+            {"_id": ObjectId(user_id)}, {"$set": {"session": None}}
+        )
 
         return {"message": "session closed"}
 
@@ -183,19 +187,20 @@ class UsersService:
         :param manager_id: Manager ID
         """
 
-        if not is_active(user_id):
+        if not is_active(UsersService.DB, user_id):
             raise InactiveUser("hitman is inactive")
 
-        if not is_active(manager_id):
+        if not is_active(UsersService.DB, manager_id):
             raise InactiveUser("manager is inactive")
 
-        db_client = get_connection()
+        if user_id == manager_id:
+            raise InvalidUser("self assigned manager")
 
-        db_client.users.update(
+        UsersService.DB.users.update(
             {"_id": ObjectId(user_id)}, {"$set": {"manager_id": ObjectId(manager_id)}}
         )
 
-        db_client.users.update(
+        UsersService.DB.users.update(
             {"_id": ObjectId(manager_id)},
             {
                 "$set": {"user_type": "manager"},
@@ -209,9 +214,10 @@ class UsersService:
     def deactivate(user_id):
         """
         Deactivate a user
-        :param user_id:
+        :param user_id: Hitman User id to deactivate
         """
 
-        db_client = get_connection()
-        db_client.users.update({"_id": ObjectId(user_id)}, {"$set": {"active": False}})
+        UsersService.DB.users.update(
+            {"_id": ObjectId(user_id)}, {"$set": {"active": False}}
+        )
         return {"message": "user deactivated"}

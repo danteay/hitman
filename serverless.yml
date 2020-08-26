@@ -13,12 +13,18 @@ layers:
     compatibleRuntime:
       - python3.8
 
+package:
+  individually: true
+  exclude:
+    - venv/**
+    - test/**
+    - node_modules/**
+
 custom:
   pythonRequirements:
     dockerizePip: non-linux
 
 functions:
-
   login:
     handler: src/handlers/users.login
     layers:
@@ -73,8 +79,17 @@ functions:
           method: put
           path: users/{user_id}/manager
 
+  deactivate_user:
+    handler: src/handlers/users.deactivate
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: put
+          path: users/{user_id}/deactivate
+
   list_hits:
-    handler: src/handlers/hits.list
+    handler: src/handlers/hits.list_hits
     layers:
       - {Ref: HitmansReqsLambdaLayer}
     events:
@@ -90,6 +105,24 @@ functions:
       - http:
           method: post
           path: hits
+
+  fetch_hit:
+    handler: src/handlers/hits.fetch_hit
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: get
+          path: hits/{hit_id}
+
+  assign_hit:
+    handler: src/handlers/hits.assign_hit
+    layers:
+      - {Ref: HitmansReqsLambdaLayer}
+    events:
+      - http:
+          method: put
+          path: hits/{hit_id}
 
 
 plugins:

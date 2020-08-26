@@ -1,8 +1,6 @@
 app_name: "hitmans"
 
-database: "mongodb+srv://hitman:swfpxMoz2qUD3FTA@hitmans.xyb5a.mongodb.net/hitmans?retryWrites=true&w=majority"
-
-master_user: "5f3f4d6946d75e60d731f1f8"
+database: "mongodb://hitman:swfpxMoz2qUD3FTA@127.0.0.1:27018"
 
 salt: "$2b$12$xWiFaDEF4pWddBgPRr.hFu"
 

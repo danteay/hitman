@@ -93,3 +93,23 @@ class InvalidHit(HandlerError):
 
     def __init__(self, errors=None):
         super().__init__(422, "invalid-hit", errors)
+
+
+class BlockedHit(HandlerError):
+    """
+    custom error hits that can't be modified
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(422, "blocked-hit", errors)
+
+
+class WrongHitStatus(HandlerError):
+    """
+    Custom error for attempts to change a hit status with a wrong value
+    :param errors: Additional errors
+    """
+
+    def __init__(self, errors=None):
+        super().__init__(422, "wrong-hit-status", errors)

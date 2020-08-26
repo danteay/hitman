@@ -14,4 +14,4 @@ def get_connection():
     """
 
     client = pymongo.MongoClient(CONFIG["database"])
-    return client.hitmans
+    return client.hitmen

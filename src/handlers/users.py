@@ -9,6 +9,7 @@ import src.helpers.session as session_helper
 from src.commons.errors import UnauthorizedUser
 from src.commons.logger import init_logger, LOGGER as logger
 from src.commons.http import response, error_response
+from src.commons.mongo import get_connection
 from src.helpers.users import is_master
 from src.services.users import UsersService
 
@@ -111,7 +112,7 @@ def assign_manager(event, context):
     try:
         session = session_helper.validate(event)
 
-        if not is_master(session["id"]):
+        if not is_master(get_connection(), session["id"]):
             raise UnauthorizedUser()
 
         user_id = event["pathParameters"]["user_id"]
@@ -121,6 +122,28 @@ def assign_manager(event, context):
         return response(
             200, body=UsersService.assign_manager(user_id, body["manager_id"])
         )
+    except Exception as err:
+        logger.error("assign manager error", err)
+        return error_response(err)
+
+
+def deactivate(event, context):
+    """
+    Lambda handler to deactivate a hitman
+    :param event: Lambda event data
+    :param context: Lambda context
+    :return: Api gateway response
+    """
+
+    try:
+        session = session_helper.validate(event)
+
+        if not is_master(get_connection(), session["id"]):
+            raise UnauthorizedUser()
+
+        user_id = event["pathParameters"]["user_id"]
+
+        return response(200, body=UsersService.deactivate(user_id))
     except Exception as err:
         logger.error("assign manager error", err)
         return error_response(err)

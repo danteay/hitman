@@ -1,0 +1,14 @@
+version: "3.2"
+
+services:
+  mongo:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_DATABASE: hitmen
+      MONGO_INITDB_ROOT_USERNAME: hitman
+      MONGO_INITDB_ROOT_PASSWORD: swfpxMoz2qUD3FTA
+    volumes:
+      - ./data/mongo/data:/data/db
+    ports:
+      - 27018:27017
