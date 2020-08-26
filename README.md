@@ -116,7 +116,7 @@ To start the API you need to run the next command:
 make run
 ```
 
-After running this you need to make sure that mongo docker instance is currently running.
+Before running this command you need to make sure that mongo docker instance is currently running.
 
 ## Extra make commands
 
