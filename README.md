@@ -118,6 +118,11 @@ make run
 
 Before running this command you need to make sure that mongo docker instance is currently running.
 
+All API endpoints require a valid session token except, Login and Register, before using any other
+call you should call Login using valid base user credentials, after this call postman will store the
+new session token to use in other endpoints. If you want to use a different user session to test, just
+call Logout and change credentials on Login to store a new session token.
+
 ## Extra make commands
 
 * *Format code:* `make fmt` (requires black package)
